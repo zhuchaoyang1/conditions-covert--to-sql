@@ -1,5 +1,6 @@
 package com.kedacom;
 
+import com.kedacom.entity.User;
 import com.kedacom.util.SqlExecutorWithJPQL;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -12,6 +13,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import javax.persistence.EntityManager;
+import javax.persistence.Query;
 import java.util.List;
 
 @RunWith(SpringRunner.class)
@@ -22,6 +25,9 @@ public class TransformationSqlApplicationTests {
 
     @Autowired
     private SqlExecutorWithJPQL sqlExecutorWithJPQL;
+
+    @Autowired
+    private EntityManager entityManager;
 
     /**
      * 无参数
@@ -74,6 +80,40 @@ public class TransformationSqlApplicationTests {
             logger.error("--- TransformationSqlApplicationTests：没有该表");
         } else {
             print(result);
+        }
+    }
+
+
+    @Test
+    public void test() {
+        Query query = entityManager.createNativeQuery("select * from trans_user where id = 1", User.class);
+        List<User> list = query.getResultList();
+        for (User user : list) {
+            logger.info(user.toString());
+        }
+    }
+
+
+    /**
+     * 同一天不写具体时间会有问题
+     * 解决方案在下面一种
+     * 原生JPQL对日期的支持
+     */
+    @Test
+    public void test2() {
+        Query query = entityManager.createNativeQuery("select * from trans_user where start_time BETWEEN '2019-09-18' AND '2019-09-18'", User.class);
+        List<User> list = query.getResultList();
+        for (User user : list) {
+            logger.info(user.toString());
+        }
+    }
+
+    @Test
+    public void test3() {
+        Query query = entityManager.createNativeQuery("select * from trans_user where start_time BETWEEN '2019-09-18 00:00:00.0' AND '2019-09-19 00:00:00.0'", User.class);
+        List<User> list = query.getResultList();
+        for (User user : list) {
+            logger.info(user.toString());
         }
     }
 

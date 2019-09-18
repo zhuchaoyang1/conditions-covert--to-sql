@@ -11,5 +11,4 @@ public class TransformationSqlApplication {
         SpringApplication.run(TransformationSqlApplication.class, args);
     }
 
-
 }

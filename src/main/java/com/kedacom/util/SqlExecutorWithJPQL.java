@@ -29,8 +29,6 @@ public class SqlExecutorWithJPQL {
 
     private Class eneityClass = null;
 
-    private int allCount = 0;
-
     private Query query = null;
 
     private List content;
@@ -83,13 +81,17 @@ public class SqlExecutorWithJPQL {
         }
 
         if (pageable != null) {
+            // 当pageable为null时，需要重新调用此方法获取数据长度
             query.setFirstResult((int) pageable.getOffset());
             query.setMaxResults(pageable.getPageSize());
+
+        } else {
+            // 当pageable为null时，content.size为实际的真实长度
         }
 
         content = query.getResultList();
 
-        // 缺憾 content.size并不是整个的数据
+
         return new PageImpl(content, pageable == null ? Pageable.unpaged() : pageable, content.size());
     }
 

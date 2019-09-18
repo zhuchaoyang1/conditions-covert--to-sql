@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
+import java.util.Date;
 
 /**
  * @author 朱朝阳
@@ -29,5 +30,8 @@ public class User {
     @Basic
     private String password;
 
+    private Date startTime;
+
+    private Date endTime;
 
 }
