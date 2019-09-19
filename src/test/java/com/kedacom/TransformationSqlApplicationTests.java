@@ -17,6 +17,9 @@ import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import java.util.List;
 
+/**
+ * 测试的类已启用
+ */
 @RunWith(SpringRunner.class)
 @SpringBootTest
 public class TransformationSqlApplicationTests {

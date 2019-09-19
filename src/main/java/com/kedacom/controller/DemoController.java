@@ -14,8 +14,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/demo")
 public class DemoController {
 
-    @GetMapping("/test/{query}")
-    public String test(@PathVariable String query) {
+    @GetMapping("/test/{query}/{entityName}")
+    public String test(@PathVariable String query,@PathVariable String entityName) {
         return query;
     }
 
