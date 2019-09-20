@@ -156,13 +156,12 @@ public class SqlExecutor {
             }
 
             // 以下三步拼接顺序不能乱
-//            if (index == 0) {
-//                standardSQLWhithPage.append(" and ");
-//            }
+            if (index == 0 && !(tinyQuerySegment instanceof int[])) {
+                standardSQLWhithPage.append(" and ");
+            }
 
             // 只有不是分页 且不是第一个index时候才需要拼接And
-            if (!(tinyQuerySegment instanceof int[]) && index == 0) {
-                standardSQLWhithPage.append(" and ");
+            if (!(tinyQuerySegment instanceof int[])) {
                 standardSQLWhithPage.append((String) tinyQuerySegment);
             }
 

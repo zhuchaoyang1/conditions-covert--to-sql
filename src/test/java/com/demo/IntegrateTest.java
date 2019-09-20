@@ -32,7 +32,7 @@ public class IntegrateTest {
      */
     @Test
     public void testEq() {
-        Object result = sqlExecutor.builderExecutorSql("query_eq_names='zcy'&query_eq_password='admin'", "com.demo.entity.User");
+        Object result = sqlExecutor.builderExecutorSql("query_eq_name='zcy'&query_eq_password='admin'", "com.demo.entity.User");
 
         if (result instanceof String) {
             logger.error("---IntegrateTest:" + result);
@@ -265,6 +265,7 @@ public class IntegrateTest {
     /**
      * 集成测试OrderBy 操作符
      * Result: 测试成功
+     * TODO: 若OrderBy在前面则会出错 待容错
      */
     @Test
     public void testOrderBy() {
@@ -288,7 +289,7 @@ public class IntegrateTest {
      */
     @Test
     public void testPage() {
-        Object result = sqlExecutor.builderExecutorSql("query_page_=-2,2", "com.demo.entity.User");
+        Object result = sqlExecutor.builderExecutorSql("query_page_=1,2", "com.demo.entity.User");
 
         if (result instanceof String) {
             logger.error("---IntegrateTest:" + result);
@@ -317,10 +318,11 @@ public class IntegrateTest {
     /**
      * 集成测试Page、OrderBy  联合测试
      * Result: 测试失败
+     * TODO：Page只能在OrderBy前面  即 目前的系统OrderBy只能在最后
      */
     @Test
     public void testPageOrderBy() {
-        Object result = sqlExecutor.builderExecutorSql("query_orderBy_id=asc&query_name='zcy'", "com.demo.entity.User");
+        Object result = sqlExecutor.builderExecutorSql("query_orderBy_id=desc&query_page_=1,5", "com.demo.entity.User");
 
         if (result instanceof String) {
             logger.error("---IntegrateTest:" + result);
