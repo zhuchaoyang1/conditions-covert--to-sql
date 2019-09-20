@@ -1,4 +1,4 @@
-package com.kedacom.util;
+package com.demo.util;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,6 +50,11 @@ public class SqlExecutorNoJpql {
      */
     private List<String> fieldsName;
 
+    /**
+     * 标志是否有该字段或操作符
+     * 不能再builderSql方法中采用字符串，万一拼接好的SQL中也有那样的字段，则会报异常
+     */
+    boolean hasField = true, hasOption = true;
 
     private Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -125,8 +130,14 @@ public class SqlExecutorNoJpql {
             Object tinyQuerySegment = handleTiny(querySmall);
             // 字段不匹配直接跳转走
             if (tinyQuerySegment instanceof Boolean) {
-                logger.error("---SqlExecutorNoJPQL:" + "字段" + querySmall[1] + "在实体" + entityClass.getName() + "中未找到");
-                return "字段" + querySmall[1] + "在实体" + entityClass.getName() + "中未找到";
+                if (!hasField) {
+                    logger.error("---SqlExecutorNoJPQL:" + "字段：" + querySmall[1] + "在实体" + entityClass.getName() + "中未找到");
+                    return "字段" + querySmall[1] + "在实体" + entityClass.getName() + "中未找到";
+                }
+                if (!hasOption) {
+                    logger.error("---SqlExecutorNoJPQL:" + "操作符：" + querySmall[0] + "不合法");
+                    return "操作符：" + querySmall[0] + "不合法";
+                }
             }
 
             // 以下三步拼接顺序不能乱
@@ -139,6 +150,7 @@ public class SqlExecutorNoJpql {
             // 拼接连接符
             if (hasRelation && index < symbolSegments.size()) {
                 String currentRelation = symbolSegments.get(index++);
+                // OrderBy之前不需要添加连接符
                 standardSQLWhithPage.append(" " + (currentRelation.equals("&") ? " and " : " or "));
             }
         }
@@ -154,6 +166,9 @@ public class SqlExecutorNoJpql {
      * @return
      */
     public Object handleTiny(String[] querySmall) {
+
+        hasField = hasOption = true;
+
         String condition, field;
         StringBuffer stringBuffer = new StringBuffer();
 
@@ -161,6 +176,8 @@ public class SqlExecutorNoJpql {
         field = querySmall[1];
 
         if (!fieldsName.contains(field)) {
+            // 字段不存在
+            hasField = false;
             return false;
         }
 
@@ -207,19 +224,20 @@ public class SqlExecutorNoJpql {
                 break;
             }
             case "isNotNull": {
-                stringBuffer.append("var." + field + " not null ");
+                stringBuffer.append("var." + field + " is not null ");
                 break;
             }
             case "notNull": {
-                stringBuffer.append("var." + field + " not null ");
+                stringBuffer.append("var." + field + " is not null ");
                 break;
             }
             case "orderBy": {
-                stringBuffer.append("order by " + "var." + field + querySmall[2]);
+                stringBuffer.append("1=1 order by " + "var." + field + " " + querySmall[2]);
                 break;
             }
             default: {
-                // TODO:操作符不存在应提醒给前端
+                // Condition操作符不存在
+                hasOption = false;
                 return false;
             }
         }
@@ -273,7 +291,7 @@ public class SqlExecutorNoJpql {
         Object standardSQL = builderSql(symbolSegment, querySegment, entityClass);
 
         // 如果是String[] 则返回的是标准SQL  否则只能说明字段不存在
-        if(standardSQL instanceof String[]) {
+        if (standardSQL instanceof String[]) {
             String[] sqls = (String[]) standardSQL;
             // 查询出结果集 不分页
             dataFromDatabase = entityManager.createQuery(sqls[1], entityClass);

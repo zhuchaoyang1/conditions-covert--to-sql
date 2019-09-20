@@ -1,4 +1,4 @@
-package com.kedacom.entity;
+package com.demo.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -33,5 +33,11 @@ public class User {
     private Date startTime;
 
     private Date endTime;
+
+    private Boolean gender;
+
+    private Integer age;
+
+
 
 }

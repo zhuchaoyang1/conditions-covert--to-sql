@@ -8,7 +8,7 @@
         <version>2.1.8.RELEASE</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
-    <groupId>com.kedacom</groupId>
+    <groupId>com.demo</groupId>
     <artifactId>transformation-sql</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>transformation-sql</name>

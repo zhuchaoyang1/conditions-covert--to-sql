@@ -2,9 +2,10 @@ server:
   port: 8092
 
 
+
 logging:
   level:
-    com.kedacom: info
+    com.demo: info
   file:
     transformation-sql.log
 

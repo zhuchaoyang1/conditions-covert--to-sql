@@ -1,4 +1,4 @@
-package com.kedacom.dao;
+package com.demo.dao;
 
 /**
  * @author 朱朝阳

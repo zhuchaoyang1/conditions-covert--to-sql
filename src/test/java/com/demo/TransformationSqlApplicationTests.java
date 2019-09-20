@@ -1,7 +1,7 @@
-package com.kedacom;
+package com.demo;
 
-import com.kedacom.entity.User;
-import com.kedacom.util.SqlExecutorWithJPQL;
+import com.demo.entity.User;
+import com.demo.util.SqlExecutorWithJPQL;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -41,7 +41,7 @@ public class TransformationSqlApplicationTests {
     public void contextLoadsTest1() {
         logger.info("----SqlExecutor：" + sqlExecutorWithJPQL.toString());
         String sql = "select * from trans_user p";
-        Object result = sqlExecutorWithJPQL.executorSql(sql, null, "com.kedacom.entity.User");
+        Object result = sqlExecutorWithJPQL.executorSql(sql, null, "com.demo.entity.User");
         if (result instanceof String) {
             logger.error("--- TransformationSqlApplicationTests：没有该表");
         } else {
@@ -78,7 +78,7 @@ public class TransformationSqlApplicationTests {
         logger.info("----SqlExecutor：" + sqlExecutorWithJPQL.toString());
         String sql = "select * from trans_user p";
         Pageable pageable = new PageRequest(0, 2, null);
-        Object result = sqlExecutorWithJPQL.executorSqlWithPage(sql, null, "com.kedacom.entity.User", pageable);
+        Object result = sqlExecutorWithJPQL.executorSqlWithPage(sql, null, "com.demo.entity.User", pageable);
         if (result instanceof String) {
             logger.error("--- TransformationSqlApplicationTests：没有该表");
         } else {

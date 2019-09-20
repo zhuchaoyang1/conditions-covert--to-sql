@@ -1,7 +1,7 @@
-package com.kedacom;
+package com.demo;
 
-import com.kedacom.util.ReflexValidateField;
-import com.kedacom.util.SqlExecutorNoJpql;
+import com.demo.util.ReflexValidateField;
+import com.demo.util.SqlExecutorNoJpql;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -89,7 +89,7 @@ public class UtilTests {
         String conError = "and";
         String[] strings = conError.split("=|_");
         for (String thisOne : strings) {
-            logger.info("----UtilTests:"+thisOne);
+            logger.info("----UtilTests:" + thisOne);
         }
     }
 
@@ -97,13 +97,26 @@ public class UtilTests {
     @Test
     public void test5() {
         try {
-            Field[] fields = reflexValidateField.returnAllFiled(Class.forName("com.kedacom.entity.User"));
-            for(Field field : fields) {
-                logger.info("----ReflexValidateField： "+field.getName());
+            Field[] fields = reflexValidateField.returnAllFiled(Class.forName("com.demo.entity.User"));
+            for (Field field : fields) {
+                logger.info("----ReflexValidateField： " + field.getName());
             }
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
+    }
+
+    @Test
+    public void booleans() {
+        Boolean flag = true, flag2 = true;
+        s(flag,flag2);
+        logger.info(""+flag);
+        logger.info(""+flag2);
+    }
+
+    public void s(Boolean flag,Boolean flag2) {
+        flag = false;
+        flag2 = false;
     }
 
 

@@ -1,4 +1,4 @@
-package com.kedacom.util;
+package com.demo.util;
 
 /**
  * 构造SQL
