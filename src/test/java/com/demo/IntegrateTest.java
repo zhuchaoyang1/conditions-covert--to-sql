@@ -282,6 +282,57 @@ public class IntegrateTest {
     }
 
 
+    /**
+     * 集成测试Page 操作符
+     * Result: 测试成功
+     */
+    @Test
+    public void testPage() {
+        Object result = sqlExecutor.builderExecutorSql("query_page_=-2,2", "com.demo.entity.User");
+
+        if (result instanceof String) {
+            logger.error("---IntegrateTest:" + result);
+        }
+
+        if (result instanceof List) {
+            for (User user : (List<User>) result) {
+                logger.info(user.toString());
+            }
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+    // --------------------------------- 以下为多操作符联合测试 ------------------------------------------------------
+
+    /**
+     * 集成测试Page、OrderBy  联合测试
+     * Result: 测试失败
+     */
+    @Test
+    public void testPageOrderBy() {
+        Object result = sqlExecutor.builderExecutorSql("query_orderBy_id=asc&query_name='zcy'", "com.demo.entity.User");
+
+        if (result instanceof String) {
+            logger.error("---IntegrateTest:" + result);
+        }
+
+        if (result instanceof List) {
+            for (User user : (List<User>) result) {
+                logger.info(user.toString());
+            }
+        }
+    }
+
 
 
 

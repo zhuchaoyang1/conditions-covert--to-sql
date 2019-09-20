@@ -120,6 +120,27 @@ public class TransformationSqlApplicationTests {
         }
     }
 
+    @Test
+    public void test5() {
+        Query query = entityManager.createNativeQuery("select * from trans_user limit 1,5", User.class);
+        List<User> list = query.getResultList();
+        for (User user : list) {
+            logger.info(user.toString());
+        }
+    }
+
+    /**
+     * JPQL不可以直接对分页支持 需要通过Query设置
+     */
+    @Test
+    public void test4() {
+        Query query = entityManager.createQuery("select var from com.demo.entity.User var limit 1,2", User.class);
+        List<User> list = query.getResultList();
+        for (User user : list) {
+            logger.info(user.toString());
+        }
+    }
+
 
     private void print(Object result) {
         if (result instanceof PageImpl) {

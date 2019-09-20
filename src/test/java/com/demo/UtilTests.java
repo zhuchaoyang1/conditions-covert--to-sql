@@ -85,9 +85,8 @@ public class UtilTests {
 
     @Test
     public void test4() {
-        String conRight = "isNotNull_name";
-        String conError = "and";
-        String[] strings = conError.split("=|_");
+        String conRight = "query_page_=1,5";
+        String[] strings = conRight.split("=|_");
         for (String thisOne : strings) {
             logger.info("----UtilTests:" + thisOne);
         }

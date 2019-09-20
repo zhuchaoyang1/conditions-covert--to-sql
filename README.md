@@ -33,7 +33,7 @@
 * OrderBy
 
 框架对上述扩展分页和相等条件 （FindBy注重的是条件 相等条件已经在其内部拼接好）
-* limit  1,5
+* Page  Eg:x,y x->pageNo,y->pageSize  pageNo从1开始
 * eq 
 
 ###（三）暂不支持多表联合查询

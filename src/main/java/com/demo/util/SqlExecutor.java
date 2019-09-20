@@ -3,6 +3,7 @@ package com.demo.util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -17,7 +18,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
- * 拼接成原生标准SQL
+ * 拼接成JPQL
  *
  * @Author: ${朱朝阳}
  * @Date: 2019/9/18 23:30
@@ -54,7 +55,12 @@ public class SqlExecutor {
      * 标志是否有该字段或操作符
      * 不能再builderSql方法中采用字符串，万一拼接好的SQL中也有那样的字段，则会报异常
      */
-    boolean hasField = true, hasOption = true;
+    private boolean hasField = true, hasOption = true, pageStart = true;
+
+    /**
+     * 全局分页信息
+     */
+    private PageRequest pageRequest;
 
     private Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -111,8 +117,6 @@ public class SqlExecutor {
 
         // 如果有分页信息则拼接分页信息 如果没有分页信息则不拼分页
         StringBuffer standardSQLWhithPage = new StringBuffer();
-        // 如果没有分页条件则为null  如果有分页信息不拼接分页  用于查询总记录数    先不做
-        StringBuffer standardSQLWhithNoPage = new StringBuffer();
 
 
         standardSQLWhithPage.append("select var from " + entityClass.getName() + " var where 1=1");
@@ -124,7 +128,7 @@ public class SqlExecutor {
 
             if (querySmall.length < 2) {
                 // 说明前端发送的条件碎片有不合格存在
-                return new Object[]{"条件碎片拼接不合理"};
+                return "条件碎片拼接不合理";
             }
 
             Object tinyQuerySegment = handleTiny(querySmall);
@@ -138,14 +142,29 @@ public class SqlExecutor {
                     logger.error("---SqlExecutorNoJPQL:" + "操作符：" + querySmall[0] + "不合法");
                     return "操作符：" + querySmall[0] + "不合法";
                 }
+                if(!pageStart) {
+                    logger.error("---SqlExecutorNoJPQL:分页信息不合法");
+                    return "分页信息不合法";
+                }
+            } else if (tinyQuerySegment instanceof int[]) {
+                // JPQL不支持分页 只能通过Query对象设置分页
+                if (pageRequest == null) {
+                    // 初始化
+                    int[] pageInfoInt = (int[]) tinyQuerySegment;
+                    pageRequest = new PageRequest(pageInfoInt[0], pageInfoInt[1]);
+                }
             }
 
             // 以下三步拼接顺序不能乱
-            if (index == 0) {
-                standardSQLWhithPage.append(" and ");
-            }
+//            if (index == 0) {
+//                standardSQLWhithPage.append(" and ");
+//            }
 
-            standardSQLWhithPage.append((String) tinyQuerySegment);
+            // 只有不是分页 且不是第一个index时候才需要拼接And
+            if (!(tinyQuerySegment instanceof int[]) && index == 0) {
+                standardSQLWhithPage.append(" and ");
+                standardSQLWhithPage.append((String) tinyQuerySegment);
+            }
 
             // 拼接连接符
             if (hasRelation && index < symbolSegments.size()) {
@@ -155,8 +174,7 @@ public class SqlExecutor {
             }
         }
 
-
-        return new String[]{standardSQLWhithNoPage.toString(), standardSQLWhithPage.toString()};
+        return new String[]{standardSQLWhithPage.toString()};
     }
 
     /**
@@ -175,7 +193,8 @@ public class SqlExecutor {
         condition = querySmall[0];
         field = querySmall[1];
 
-        if (!fieldsName.contains(field)) {
+        // 分页中没有字段名称 为了统一请在前端条件的page后面同样拼接上_ 如：query_page_=1,10
+        if (!StringUtils.isEmpty(field) && !fieldsName.contains(field)) {
             // 字段不存在
             hasField = false;
             return false;
@@ -234,6 +253,15 @@ public class SqlExecutor {
             case "orderBy": {
                 stringBuffer.append("1=1 order by " + "var." + field + " " + querySmall[2]);
                 break;
+            }
+            case "page": {
+                String[] pageInfoStr = querySmall[2].split(",");
+                // PageNo PageSize
+                if(Integer.parseInt(pageInfoStr[0]) <= 0) {
+                    pageStart = false;
+                    return false;
+                }
+                return new int[]{Integer.parseInt(pageInfoStr[0]), Integer.parseInt(pageInfoStr[1])};
             }
             default: {
                 // Condition操作符不存在
@@ -294,7 +322,14 @@ public class SqlExecutor {
         if (standardSQL instanceof String[]) {
             String[] sqls = (String[]) standardSQL;
             // 查询出结果集 不分页
-            dataFromDatabase = entityManager.createQuery(sqls[1], entityClass);
+            dataFromDatabase = entityManager.createQuery(sqls[0], entityClass);
+            if (pageRequest != null) {
+                // 需要分页
+                dataFromDatabase.setFirstResult((pageRequest.getPageNumber() - 1) * pageRequest.getPageSize());
+                dataFromDatabase.setMaxResults(pageRequest.getPageSize());
+                // 释放
+                pageRequest = null;
+            }
             return dataFromDatabase.getResultList();
         }
 
@@ -307,3 +342,4 @@ public class SqlExecutor {
 
 
 }
+
