@@ -1,7 +1,7 @@
 package com.demo;
 
 import com.demo.util.ReflexValidateField;
-import com.demo.util.SqlExecutorNoJpql;
+import com.demo.util.SqlExecutor;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -26,7 +26,7 @@ public class UtilTests {
     private Logger logger = LoggerFactory.getLogger(UtilTests.class);
 
     @Autowired
-    private SqlExecutorNoJpql sqlExecutorNoJpql;
+    private SqlExecutor sqlExecutor;
 
     @Autowired
     private ReflexValidateField reflexValidateField;
@@ -70,7 +70,7 @@ public class UtilTests {
 
     @Test
     public void test3() {
-        Object[] obj = sqlExecutorNoJpql.relationSplit("query_eq_name=a&a&query_eq_cc=15|query_eq_qd=1|5|update_eq_ss=15&update_eq_s=78");
+        Object[] obj = sqlExecutor.relationSplit("query_eq_name=a&a&query_eq_cc=15|query_eq_qd=1|5|update_eq_ss=15&update_eq_s=78");
         List<String> symbols = (List<String>) obj[0];
         List<String> querys = (List<String>) obj[1];
         logger.info("----UtilTests: 关联如下：");

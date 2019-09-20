@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
  * @Date: 2019/9/18 23:30
  */
 @Component
-public class SqlExecutorNoJpql {
+public class SqlExecutor {
 
     @Autowired
     private EntityManager entityManager;
