@@ -21,6 +21,7 @@ target/
 
 
 SqlExecutorWithJPQL.java
+*.log
 
 ### NetBeans ###
 /nbproject/private/
