@@ -1,8 +1,6 @@
 server:
   port: 8092
 
-
-
 logging:
   level:
     com.demo: info

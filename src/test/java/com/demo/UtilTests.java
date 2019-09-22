@@ -1,5 +1,6 @@
 package com.demo;
 
+import com.demo.util.DateUtil;
 import com.demo.util.ReflexValidateField;
 import com.demo.util.SqlExecutor;
 import org.junit.Test;
@@ -30,6 +31,9 @@ public class UtilTests {
 
     @Autowired
     private ReflexValidateField reflexValidateField;
+
+    @Autowired
+    private DateUtil dateUtil;
 
 
     /**
@@ -117,6 +121,15 @@ public class UtilTests {
         flag = false;
         flag2 = false;
     }
+
+
+    @Test
+    public void test6() {
+        String sqls = "select * from user and ".trim();
+        sqls = sqls.endsWith("and") ? sqls.substring(0, sqls.length() - 3) : sqls;
+        logger.info("----UtilTests："+sqls);
+    }
+
 
 
 }

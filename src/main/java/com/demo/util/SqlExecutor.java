@@ -3,7 +3,9 @@ package com.demo.util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -31,6 +33,9 @@ public class SqlExecutor {
 
     @Autowired
     private ReflexValidateField reflexValidateField;
+
+    @Autowired
+    private DateUtil dateUtil;
 
     private Class entityClass;
 
@@ -84,7 +89,8 @@ public class SqlExecutor {
 
         String[] split = pattern.split(queryConditions);
 
-        if (matcher.find()) ;     // 去掉上面添加的|
+        // 去掉上面添加的|
+        if (matcher.find()) ;
         while (matcher.find()) {
             symbolSegment.add(String.valueOf(matcher.group(0).charAt(0)));
         }
@@ -109,29 +115,38 @@ public class SqlExecutor {
     public Object builderSql(List<String> symbolSegments, List<String> querySegments, Class entityClass) {
         int index = 0;
 
-        String currentCondition;
-
         String[] querySmall;
 
         boolean hasRelation = symbolSegments.size() == 0 ? false : true;
 
-        // 如果有分页信息则拼接分页信息 如果没有分页信息则不拼分页
         StringBuffer standardSQLWhithPage = new StringBuffer();
 
 
         standardSQLWhithPage.append("select var from " + entityClass.getName() + " var where 1=1");
+
+        String currentRelation = null;
+
+        if (querySegments.size() > 0) {
+            standardSQLWhithPage.append(" and ");
+        }
+
         // eq_name=aa --> eq name aa  isNotNull_name=aa    like_name=aa       条件_字段=数据
         for (String querySeg : querySegments) {
-            // 去空格
-            currentCondition = querySeg.replaceAll(" ", "");
-            querySmall = currentCondition.split(queryRegex);
+
+            // 拼接连接符
+            if (hasRelation && index < symbolSegments.size()) {
+                currentRelation = symbolSegments.get(index++);
+            }
+
+            querySmall = querySeg.split(queryRegex);
 
             if (querySmall.length < 2) {
                 // 说明前端发送的条件碎片有不合格存在
                 return "条件碎片拼接不合理";
             }
 
-            Object tinyQuerySegment = handleTiny(querySmall);
+            Object tinyQuerySegment = handleTiny(currentRelation, querySmall);
+            currentRelation = null;
             // 字段不匹配直接跳转走
             if (tinyQuerySegment instanceof Boolean) {
                 if (!hasField) {
@@ -142,7 +157,7 @@ public class SqlExecutor {
                     logger.error("---SqlExecutorNoJPQL:" + "操作符：" + querySmall[0] + "不合法");
                     return "操作符：" + querySmall[0] + "不合法";
                 }
-                if(!pageStart) {
+                if (!pageStart) {
                     logger.error("---SqlExecutorNoJPQL:分页信息不合法");
                     return "分页信息不合法";
                 }
@@ -155,22 +170,12 @@ public class SqlExecutor {
                 }
             }
 
-            // 以下三步拼接顺序不能乱
-            if (index == 0 && !(tinyQuerySegment instanceof int[])) {
-                standardSQLWhithPage.append(" and ");
-            }
 
-            // 只有不是分页 且不是第一个index时候才需要拼接And
+            // 分页信息不拼接条件碎片
             if (!(tinyQuerySegment instanceof int[])) {
                 standardSQLWhithPage.append((String) tinyQuerySegment);
             }
 
-            // 拼接连接符
-            if (hasRelation && index < symbolSegments.size()) {
-                String currentRelation = symbolSegments.get(index++);
-                // OrderBy之前不需要添加连接符
-                standardSQLWhithPage.append(" " + (currentRelation.equals("&") ? " and " : " or "));
-            }
         }
 
         return new String[]{standardSQLWhithPage.toString()};
@@ -182,15 +187,15 @@ public class SqlExecutor {
      * @param querySmall Eg: [eq,name,aa] 或者 [isNotNull name] 拼接成SQL条件片段
      * @return
      */
-    public Object handleTiny(String[] querySmall) {
+    public Object handleTiny(String currentRelation, String[] querySmall) {
 
         hasField = hasOption = true;
 
         String condition, field;
         StringBuffer stringBuffer = new StringBuffer();
 
-        condition = querySmall[0];
-        field = querySmall[1];
+        condition = querySmall[0].replaceAll(" ", "");
+        field = querySmall[1].replaceAll(" ", "");
 
         // 分页中没有字段名称 为了统一请在前端条件的page后面同样拼接上_ 如：query_page_=1,10
         if (!StringUtils.isEmpty(field) && !fieldsName.contains(field)) {
@@ -198,6 +203,8 @@ public class SqlExecutor {
             hasField = false;
             return false;
         }
+
+        currentRelation = StringUtils.isEmpty(currentRelation) ? "" : (currentRelation.equals("&") ? " and " : " or ");
 
         switch (condition) {
             case "eq": {
@@ -233,8 +240,19 @@ public class SqlExecutor {
                 break;
             }
             case "between": {
-                // TODO：  需要对日期做额外的处理  如判断是否为日期字符串 是否为同一天 是否为同一时刻
-                stringBuffer.append("var." + field + " between " + querySmall[2]);
+                // '2019-0 9-19 08:4 8:37' and '2019- 09-20 08:4  8:41'
+                String date = querySmall[2];
+
+                String[] timeSplit = date.split("and");
+                // timeSplit-->['2019-0 9-19 08:48:37' , '2019-09-20 08:48:41']
+                Object time1Content = dateUtil.handleDateStr(timeSplit[0], true);
+                Object time2Content = dateUtil.handleDateStr(timeSplit[1], false);
+
+                if (time1Content instanceof String && time2Content instanceof String) {
+                    date = "'" + time1Content + "' and '" + time2Content + "'";
+                }
+
+                stringBuffer.append("var." + field + " between " + date);
                 break;
             }
             case "isNull": {
@@ -256,7 +274,7 @@ public class SqlExecutor {
             case "page": {
                 String[] pageInfoStr = querySmall[2].split(",");
                 // PageNo PageSize
-                if(Integer.parseInt(pageInfoStr[0]) <= 0) {
+                if (Integer.parseInt(pageInfoStr[0]) <= 0) {
                     pageStart = false;
                     return false;
                 }
@@ -267,6 +285,10 @@ public class SqlExecutor {
                 hasOption = false;
                 return false;
             }
+        }
+
+        if (!condition.equals("page")) {
+            stringBuffer.append(currentRelation);
         }
 
         return stringBuffer.toString();
@@ -280,7 +302,7 @@ public class SqlExecutor {
      * @param entityName      实体Bean名称
      * @return
      */
-    public Object builderExecutorSql(String queryConditions, String entityName) {
+    public Object builderExecutorSql(String queryConditions, String entityName, boolean... isNeedCount) {
 
         try {
             entityClass = Class.forName(entityName);
@@ -317,23 +339,34 @@ public class SqlExecutor {
 
         Object standardSQL = builderSql(symbolSegment, querySegment, entityClass);
 
-        // 如果是String[] 则返回的是标准SQL  否则只能说明字段不存在
+        // 如果是String[] 则返回的是标准SQL  否则只能说明字段或操作符不存在
         if (standardSQL instanceof String[]) {
-            String[] sqls = (String[]) standardSQL;
-            // 查询出结果集 不分页
-            dataFromDatabase = entityManager.createQuery(sqls[0], entityClass);
-            if (pageRequest != null) {
-                // 需要分页
-                dataFromDatabase.setFirstResult((pageRequest.getPageNumber() - 1) * pageRequest.getPageSize());
-                dataFromDatabase.setMaxResults(pageRequest.getPageSize());
-                // 释放
-                pageRequest = null;
+            String sqls = ((String[]) standardSQL)[0].trim();
+            sqls = sqls.endsWith("and") ? sqls.substring(0, sqls.length() - 3) : sqls;
+            try {
+                // 查询出结果集 不分页
+                dataFromDatabase = entityManager.createQuery(sqls, entityClass);
+                if (pageRequest != null) {
+                    // 需要分页
+                    dataFromDatabase.setFirstResult((pageRequest.getPageNumber() - 1) * pageRequest.getPageSize());
+                    dataFromDatabase.setMaxResults(pageRequest.getPageSize());
+                    // 释放
+                    pageRequest = null;
+                }
+
+                long count = 0L;
+                if (isNeedCount.length > 0 && isNeedCount[0]) {
+                    countQuery = entityManager.createQuery(sqls, entityClass);
+                    count = countQuery.getResultList().size();
+                    return new PageImpl(dataFromDatabase.getResultList(), Pageable.unpaged(), count);
+                } else {
+                    return dataFromDatabase.getResultList();
+                }
+            }catch (Exception e) {
+                logger.error("---SqlExecutor："+e.toString());
+                standardSQL = "请正确拼接SQL碎片";
             }
-            return dataFromDatabase.getResultList();
         }
-
-
-        // TODO:查询总数
 
         // 到这一步返回的只有错误信息  如 字段不存在
         return standardSQL;

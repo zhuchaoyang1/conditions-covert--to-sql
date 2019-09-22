@@ -50,6 +50,17 @@
 ```
 
 ###（五）如何使用  
+1、Between使用：
 ```java
-    查看 ./src/test/java/com/demo/IntegrateTest.class
+    // 对比方式1、2说明：在时间上是否加’号都可以
+    方式1：query_between_startTime=2019-09-19 08:48:37 and 2019-09-27 08:48:41
+    方式2：query_between_startTime='2019-09-19 08:48:37' and '2019-09-27 08:48:41'
+    
+    // 如果在Date上没有写xx:xx:xx时间的话，默认包括开始时间和截至时间这两天，即下面的写法包括2019-09-19全天和2019-09-27全天
+    方式3：query_between_startTime=2019-09-19 and 2019-09-27
+    
+    // 更多用法请看：./src/test/java/com/demo/IntegrateTest.class
 ```
+
+###（六）注意问题
+    同标准SQL一样，上面的OrderBy碎片和Page碎片只能拼接在最后否则会报错：“请正确拼接SQL碎片”，而OrderBy和Page这两个碎片无先后顺序。
